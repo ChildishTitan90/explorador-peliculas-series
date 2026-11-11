@@ -1,59 +1,72 @@
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 const BASE_URL = 'https://api.themoviedb.org/3';
-const LANGUAGE = 'es-MX'; // Para obtener las sinopsis y títulos en español
+const LANGUAGE = 'es-MX';
 
-// Obtener solo las películas populares (ideal para un banner principal o sección "Tendencias")
+// Obtener películas populares
 export const fetchPopularMovies = async () => {
     try {
         const response = await fetch(`${BASE_URL}/movie/popular?api_key=${API_KEY}&language=${LANGUAGE}&page=1`);
         const data = await response.json();
-        return data.results; // Regresa 20 películas
+        // propiedad 'media_type' para identificar que son películas
+        return data.results.map(movie => ({ ...movie, media_type: 'movie' }));
     } catch (error) {
-        console.error('Error al obtener películas populares:', error);
+        console.error('Error al obtener películas:', error);
         return [];
     }
 };
 
-// Obtener un catálogo amplio de 50-60 películas (combinando páginas 1, 2 y 3) para el dashboard
-export const fetchCatalogMovies = async () => {
+// Obtener series populares de TV
+export const fetchPopularSeries = async () => {
     try {
-        const pagesToFetch = [1, 2, 3];
-        const requests = pagesToFetch.map(page =>
-            fetch(`${BASE_URL}/movie/popular?api_key=${API_KEY}&language=${LANGUAGE}&page=${page}`)
-                .then(res => res.json())
-        );
-
-        const responses = await Promise.all(requests);
-        const combinedMovies = responses.flatMap(data => data.results);
-
-        return combinedMovies; // Regresa ~60 películas únicas para la cuadrícula
+        const response = await fetch(`${BASE_URL}/tv/popular?api_key=${API_KEY}&language=${LANGUAGE}&page=1`);
+        const data = await response.json();
+        // Nota: Las series de TV usan 'name' en lugar de 'title' tons toca normalizarlo
+        return data.results.map(serie => ({
+            ...serie,
+            title: serie.name, // Normalizamos
+            release_date: serie.first_air_date, // Normalizamos la fecha
+            media_type: 'tv'
+        }));
     } catch (error) {
-        console.error('Error al obtener el catálogo amplio:', error);
+        console.error('Error al obtener series:', error);
         return [];
     }
 };
 
-// Búsqueda general (para cuando tus compañeros programen la barra de búsqueda)
+// Obtener un catálogo combinado
+export const fetchMixedCatalog = async () => {
+    try {
+        const [movies, series] = await Promise.all([
+            fetchPopularMovies(),
+            fetchPopularSeries()
+        ]);
+
+        // Combinamos ambos arreglos para tener de todo en la cuadrícula
+        const combined = [...movies, ...series];
+
+        // los revolvemos para que no salgan puras películas primero
+        return combined.sort(() => Math.random() - 0.5);
+    } catch (error) {
+        console.error('Error al combinar catálogo:', error);
+        return [];
+    }
+};
+
+// Búsqueda general (Busca películas y series automáticamente)
 export const searchMovies = async (query) => {
     if (!query.trim()) return [];
     try {
         const response = await fetch(`${BASE_URL}/search/multi?api_key=${API_KEY}&language=${LANGUAGE}&query=${encodeURIComponent(query)}`);
         const data = await response.json();
-        return data.results;
+
+        // Normalizamos resultados para que las series tengan la propiedad 'title' uniforme
+        return data.results.map(item => ({
+            ...item,
+            title: item.title || item.name,
+            release_date: item.release_date || item.first_air_date
+        }));
     } catch (error) {
         console.error('Error al buscar contenido:', error);
         return [];
-    }
-};
-
-// Obtener detalles completos de una película/serie (para cuando seleccionen una tarjeta)
-export const fetchMovieDetails = async (id, type = 'movie') => {
-    try {
-        const response = await fetch(`${BASE_URL}/${type}/${id}?api_key=${API_KEY}&language=${LANGUAGE}&append_to_response=videos`);
-        const data = await response.json();
-        return data; // Incluye sinopsis, duración, géneros y videos (tráilers)
-    } catch (error) {
-        console.error('Error al obtener los detalles:', error);
-        return null;
     }
 };
