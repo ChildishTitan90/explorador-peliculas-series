@@ -1,41 +1,115 @@
-import { useEffect, useState } from 'react';
-import { fetchPopularMovies, fetchCatalogMovies } from './services/movieService';
-
-function App() {
-  const [populars, setPopulars] = useState([]);
-  const [catalog, setCatalog] = useState([]);
-
-  useEffect(() => {
-    // Cargamos los datos para ambas secciones en paralelo
-    const loadDashboardData = async () => {
-      const popularData = await fetchPopularMovies();
-      const catalogData = await fetchCatalogMovies();
-
-      setPopulars(popularData);
-      setCatalog(catalogData);
-
-      console.log("Tendencias/Populares cargadas:", popularData.length);
-      console.log("Catálogo del dashboard cargado:", catalogData.length);
-    };
-
-    loadDashboardData();
-  }, []);
-
+import Icon from "./components/Icon";
+import { Brand } from "./components/ui";
+import { NAV } from "./presentation/moviePresentation";
+import { Home, Catalog, Detail, Modal } from "./application/controllers";
+import { useAppController } from "./application/useAppController";
+import CollectionScreen from "./screens/CollectionScreen";
+import "./App.css";
+export default function App() {
+  const {
+    route,
+    saved,
+    toggle,
+    modal,
+    setModal,
+    storageError,
+    page,
+    query,
+    detail,
+    active,
+  } = useAppController();
   return (
-    <div style={{ padding: '20px', color: '#fff', backgroundColor: '#121212', minHeight: '100vh', fontFamily: 'sans-serif' }}>
-      <h1>CineSpot Dashboard 🎬</h1>
-
-      <section style={{ marginBottom: '30px' }}>
-        <h2>🔥 Tendencias Populares ({populars.length})</h2>
-        <p>Para el banner principal o carrusel.</p>
-      </section>
-
-      <section>
-        <h2>📚 Catálogo Completo para Explorar ({catalog.length} películas)</h2>
-        <p>Para la cuadrícula principal de tarjetas donde vamos a implementar filtros y búsqueda[cite: 2].</p>
-      </section>
+    <div className={`app ${detail ? "detail-page" : ""}`}>
+      <a
+        className="skip-link"
+        href="#contenido"
+        onClick={(event) => {
+          event.preventDefault();
+          document.getElementById("contenido").focus();
+        }}
+      >
+        Saltar al contenido
+      </a>
+      <header className="header">
+        <Brand />
+        <nav className="desktop-nav glass" aria-label="Navegación principal">
+          {NAV.map(([label, slug]) => (
+            <a
+              key={slug}
+              className={active === slug ? "active" : ""}
+              aria-current={active === slug ? "page" : undefined}
+              href={`#/${slug}`}
+            >
+              {label}
+            </a>
+          ))}
+        </nav>
+        <a
+          href="#/explorar"
+          className="icon-button glass"
+          aria-label="Buscar por título"
+        >
+          <Icon name="search" />
+        </a>
+      </header>
+      <main id="contenido" tabIndex="-1">
+        {!page ? (
+          <Home {...{ saved, toggle }} />
+        ) : ["explorar", "peliculas", "series"].includes(page) ? (
+          <Catalog
+            key={`${page}:${query}`}
+            {...{ page, query, saved, toggle }}
+          />
+        ) : ["favoritos", "quiero-ver", "ya-vi"].includes(page) ? (
+          <CollectionScreen {...{ page, saved, toggle }} />
+        ) : detail && /^\d+$/.test(route.id) ? (
+          <Detail
+            key={`${page}:${route.id}`}
+            type={page === "serie" ? "tv" : "movie"}
+            id={route.id}
+            {...{ saved, toggle }}
+            openModal={(kind, item) => setModal({ kind, item })}
+          />
+        ) : (
+          <div className="empty">
+            <h1>Esta historia no está aquí.</h1>
+            <a className="button light" href="#/">
+              Volver al inicio
+            </a>
+          </div>
+        )}
+      </main>
+      {storageError && (
+        <p className="storage-warning" role="status">
+          El navegador no pudo guardar tu colección. Los cambios durarán durante
+          esta visita.
+        </p>
+      )}
+      <footer>
+        <Brand />
+        <span>Historias que se quedan contigo.</span>
+        <a href="https://www.themoviedb.org/" target="_blank" rel="noreferrer">
+          Datos de TMDb
+        </a>
+        <small>
+          Este producto utiliza la API de TMDb, pero TMDb no lo respalda ni
+          certifica.
+        </small>
+      </footer>
+      <nav className="mobile-nav glass" aria-label="Navegación móvil">
+        {NAV.map(([label, slug, icon]) => (
+          <a
+            key={slug}
+            className={active === slug ? "active" : ""}
+            aria-current={active === slug ? "page" : undefined}
+            href={`#/${slug}`}
+          >
+            <Icon name={icon} />
+            <span>{label}</span>
+          </a>
+        ))}
+      </nav>
+      {modal && <Modal modal={modal} close={() => setModal(null)} />}
     </div>
   );
 }
-
-export default App;
