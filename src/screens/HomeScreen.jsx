@@ -21,7 +21,11 @@ export default function HomeScreen({ resource, saved, toggle }) {
     <>
       <div
         className="ambient home-ambient"
-        style={{ backgroundImage: film ? `url(${backdrop(film)})` : undefined }}
+        style={{
+          backgroundImage: film
+            ? `url(${backdrop(film, "w780")})`
+            : undefined,
+        }}
       />
       <Status resource={resource}>
         {film && (
@@ -88,6 +92,7 @@ export default function HomeScreen({ resource, saved, toggle }) {
                         <img
                           src={imageUrl(item.poster_path, "w500")}
                           alt={item.title}
+                          decoding="async"
                         />
                       </button>
                     );
