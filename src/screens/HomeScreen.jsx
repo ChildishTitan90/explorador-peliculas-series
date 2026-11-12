@@ -45,7 +45,7 @@ export default function HomeScreen({ resource, saved, toggle }) {
               <div
                 className="carousel"
                 aria-roledescription="carrusel"
-                aria-label="Películas destacadas"
+                aria-label="Películas y series destacadas"
                 tabIndex="0"
                 onKeyDown={(event) => {
                   if (event.key === "ArrowRight") move(1);
@@ -96,14 +96,14 @@ export default function HomeScreen({ resource, saved, toggle }) {
                 <button
                   className="icon-button glass carousel-prev"
                   onClick={() => move(-1)}
-                  aria-label="Película anterior"
+                  aria-label="Título anterior"
                 >
                   <Icon name="left" />
                 </button>
                 <button
                   className="icon-button glass carousel-next"
                   onClick={() => move(1)}
-                  aria-label="Película siguiente"
+                  aria-label="Título siguiente"
                 >
                   <Icon name="right" />
                 </button>
@@ -136,7 +136,7 @@ export default function HomeScreen({ resource, saved, toggle }) {
                 <a href="#/explorar">Ver todo →</a>
               </div>
               <Grid
-                items={resource.data.catalog.slice(0, 3)}
+                items={resource.data.catalog}
                 {...{ saved, toggle }}
               />
             </section>
