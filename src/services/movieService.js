@@ -1,6 +1,30 @@
+import {
+    fetchPopularMovies as loadPopularMovies,
+    fetchPopularSeries as loadPopularSeries,
+} from './interfaceApi.js';
+
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 const BASE_URL = 'https://api.themoviedb.org/3';
 const LANGUAGE = 'es-MX';
+
+export async function fetchRandomHomeCatalog(signal) {
+    const randomPage = () => Math.floor(Math.random() * 5) + 1;
+    const [movies, series] = await Promise.all([
+        loadPopularMovies(randomPage(), signal),
+        loadPopularSeries(randomPage(), signal),
+    ]);
+    const catalog = [...movies, ...series];
+
+    for (let index = catalog.length - 1; index > 0; index--) {
+        const randomIndex = Math.floor(Math.random() * (index + 1));
+        [catalog[index], catalog[randomIndex]] = [catalog[randomIndex], catalog[index]];
+    }
+
+    return {
+        featured: catalog.slice(0, 5),
+        catalog: catalog.slice(5),
+    };
+}
 
 // Obtener películas populares
 export const fetchPopularMovies = async () => {
