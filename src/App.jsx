@@ -1,3 +1,4 @@
+import SocialViews from "./social/SocialViews";
 import Icon from "./components/Icon";
 import { Brand } from "./components/ui";
 import { NAV } from "./presentation/moviePresentation";
@@ -51,9 +52,27 @@ export default function App() {
         >
           <Icon name="search" />
         </a>
+        <div className="social-nav-links">
+          <a href="#/actividad">Actividad</a>
+          <a href="#/acceso">Entrar</a>
+          <a
+            className="profile-entry"
+            href="#/perfil/pablo"
+            aria-label="Ver perfil de demostración"
+          >
+            P
+          </a>
+        </div>
       </header>
       <main id="contenido" tabIndex="-1">
-        {!page ? (
+        {["actividad", "perfil", "acceso", "personas"].includes(page) ? (
+          <SocialViews
+            key={`${page}:${route.id}`}
+            page={page}
+            username={route.id}
+            scope={page === "personas" ? route.section : route.id}
+          />
+        ) : !page ? (
           <Home {...{ saved, toggle }} />
         ) : ["explorar", "peliculas", "series"].includes(page) ? (
           <Catalog

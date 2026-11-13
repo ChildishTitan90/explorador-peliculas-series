@@ -1,3 +1,4 @@
+import { SocialRatingPanel } from "../social/SocialViews";
 import { useState } from "react";
 import Icon from "../components/Icon";
 import { Status, Button, Grid } from "../components/ui";
@@ -98,6 +99,11 @@ export default function DetailScreen({
           >
             <Icon name="play" />
           </button>
+          <SocialRatingPanel
+            key={`${type}:${item.id}`}
+            item={item}
+            type={type}
+          />
           <section className="detail-info">
             {type === "tv" && (
               <div className="chips">
