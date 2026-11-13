@@ -43,11 +43,13 @@ export const genres = (item) =>
     .slice(0, 2)
     .join(" · ") ||
   (item.media_type === "tv" ? "Serie" : "Película");
-export const backdrop = (item) =>
+export const backdrop = (item, size = "original") =>
   ({
     157336: "/images/interstellar-bg.jpg",
     438631: "/images/dune-bg.jpg",
     70523: "/images/dark.jpg",
-  })[item.id] || imageUrl(item.backdrop_path || item.poster_path, "original");
+  })[item.id] ||
+  imageUrl(item.backdrop_path || item.poster_path, size);
+
 export const href = (item) =>
   `#/${item.media_type === "tv" ? "serie" : "pelicula"}/${item.id}`;
