@@ -964,9 +964,6 @@ footer small {
   .card-band p {
     font-size: 12px;
   }
-  .home-recommendations .movie-grid > .card:not(:first-child) {
-    display: none;
-  }
   .search-field {
     min-height: 58px;
     padding: 16px 18px;

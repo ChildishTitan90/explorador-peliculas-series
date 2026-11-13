@@ -8,6 +8,7 @@ import {
   fetchDetails,
   fetchSeason,
 } from "../services/interfaceApi";
+import { fetchRandomHomeCatalog } from "../services/movieService";
 import { genres, href } from "../presentation/moviePresentation";
 import HomeScreen from "../screens/HomeScreen";
 import CatalogScreen from "../screens/CatalogScreen";
@@ -15,16 +16,7 @@ import DetailScreen from "../screens/DetailScreen";
 import SeasonScreen from "../screens/SeasonScreen";
 import ModalView from "../components/ModalView";
 export function Home(props) {
-  const resource = useResource(
-    (signal) =>
-      Promise.all([
-        fetchMixedCatalog(1, signal),
-        ...[157336, 335984, 329865, 152601, 438631].map((id) =>
-          fetchDetails("movie", id, signal),
-        ),
-      ]).then(([catalog, ...featured]) => ({ featured, catalog })),
-    [],
-  );
+  const resource = useResource(fetchRandomHomeCatalog, []);
   return <HomeScreen {...props} resource={resource} />;
 }
 export function Catalog({ page, query, ...props }) {
