@@ -15,6 +15,9 @@ export default function HomeScreen({ resource, saved, toggle }) {
   const start = useRef(null);
   const items = resource.data?.featured || [];
   const film = items[selected];
+  const inWatchlist = Boolean(
+    film && saved["quiero-ver"].some((item) => keyOf(item) === keyOf(film)),
+  );
   const move = (delta) =>
     setSelected((n) => (n + delta + items.length) % items.length);
   return (
@@ -124,13 +127,13 @@ export default function HomeScreen({ resource, saved, toggle }) {
                     Ver detalles
                   </a>
                   <Button
-                    icon="plus"
+                    type="button"
+                    icon={inWatchlist ? "check" : "plus"}
+                    className="watchlist-button"
                     onClick={() => toggle("quiero-ver", film)}
-                    aria-pressed={saved["quiero-ver"].some(
-                      (m) => keyOf(m) === keyOf(film),
-                    )}
+                    aria-pressed={inWatchlist}
                   >
-                    Quiero ver
+                    {inWatchlist ? "En mi lista" : "Quiero ver"}
                   </Button>
                 </div>
               </div>

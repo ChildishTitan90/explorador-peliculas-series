@@ -1584,3 +1584,8 @@ footer small {
     scroll-behavior: auto !important;
   }
 }
+
+.selected-film .watchlist-button[aria-pressed="true"] {
+  background: rgba(217, 197, 166, 0.2);
+  color: var(--warm);
+}
