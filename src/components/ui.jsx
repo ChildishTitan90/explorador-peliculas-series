@@ -7,6 +7,7 @@ import {
   genres,
   href,
 } from "../presentation/moviePresentation";
+import { useEffect, useRef, useState } from "react";
 export function Status({ resource, children }) {
   if (resource.loading)
     return (
@@ -97,24 +98,44 @@ export function Heading({ eyebrow, title, subtitle }) {
     </div>
   );
 }
+
 export function Search({ initial = "", onSearch }) {
+  const [value, setValue] = useState(initial);
+  const timer = useRef(null);
+
+  useEffect(() => {
+    timer.current = setTimeout(() => {
+      onSearch(value.trim());
+    }, 350);
+
+    return () => clearTimeout(timer.current);
+  }, [value, onSearch]);
+
+  function handleSubmit(event) {
+    event.preventDefault();
+
+    clearTimeout(timer.current);
+    onSearch(value.trim());
+  }
+
   return (
     <form
       className="search-field glass"
-      onSubmit={(event) => {
-        event.preventDefault();
-        const query = new FormData(event.currentTarget).get("query").trim();
-        onSearch(query);
-      }}
+      role="search"
+      onSubmit={handleSubmit}
     >
       <Icon name="search" />
+
       <input
-        key={initial}
         name="query"
-        defaultValue={initial}
+        type="search"
+        value={value}
+        onChange={(event) => setValue(event.target.value)}
         aria-label="Buscar películas o series por título"
         placeholder="Buscar películas o series…"
+        autoComplete="off"
       />
+
       <button type="submit">
         Buscar <span aria-hidden="true">↵</span>
       </button>

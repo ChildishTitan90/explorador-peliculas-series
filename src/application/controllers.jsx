@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useResource } from "./useResource";
 import {
   fetchMixedCatalog,
@@ -19,15 +19,49 @@ export function Home(props) {
   const resource = useResource(fetchRandomHomeCatalog, []);
   return <HomeScreen {...props} resource={resource} />;
 }
-export function Catalog({ page, query, ...props }) {
+
+export function Catalog({ page, query: initialQuery, ...props }) {
   const [filter, setFilter] = useState("Todo");
-  const [number, setNumber] = useState(1);
+
+  const [search, setSearch] = useState({
+    query: initialQuery.trim(),
+    number: 1,
+  });
+
+  const { query, number } = search;
+
   const isMovies = page === "peliculas";
   const isSeries = page === "series";
+
+  const type = isMovies ? "movie" : isSeries ? "tv" : undefined;
+
+  const onSearch = useCallback((text) => {
+    setSearch((previous) => {
+      if (previous.query === text) return previous;
+
+      return {
+        query: text,
+        number: 1,
+      };
+    });
+
+    setFilter("Todo");
+  }, []);
+
+  function setNumber(update) {
+    setSearch((previous) => ({
+      ...previous,
+      number:
+        typeof update === "function"
+          ? update(previous.number)
+          : update,
+    }));
+  }
+
   const resource = useResource(
     (signal) =>
       query
-        ? searchMovies(query, number, signal)
+        ? searchMovies(query, number, signal, type)
         : isMovies
           ? fetchPopularMovies(number, signal)
           : isSeries
@@ -35,10 +69,12 @@ export function Catalog({ page, query, ...props }) {
             : fetchMixedCatalog(number, signal),
     [page, query, number],
   );
+
   const labels =
     isMovies || isSeries
       ? ["Todo", "Ciencia ficción", "Drama", "Aventura", "Misterio"]
       : ["Todo", "Películas", "Series"];
+
   const items = (resource.data || []).filter(
     (item) =>
       filter === "Todo" ||
@@ -46,6 +82,7 @@ export function Catalog({ page, query, ...props }) {
       (filter === "Series" && item.media_type === "tv") ||
       genres(item).includes(filter),
   );
+
   return (
     <CatalogScreen
       {...props}
@@ -61,12 +98,11 @@ export function Catalog({ page, query, ...props }) {
         labels,
         items,
       }}
-      onSearch={(query) => {
-        location.hash = `/explorar${query ? `?q=${encodeURIComponent(query)}` : ""}`;
-      }}
+      onSearch={onSearch}
     />
   );
 }
+
 export function SeasonList({ item }) {
   const seasons = item.seasons?.filter((s) => s.season_number > 0) || [];
   const [number, setNumber] = useState(seasons[0]?.season_number || 1);

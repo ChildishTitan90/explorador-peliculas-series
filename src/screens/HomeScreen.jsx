@@ -15,13 +15,20 @@ export default function HomeScreen({ resource, saved, toggle }) {
   const start = useRef(null);
   const items = resource.data?.featured || [];
   const film = items[selected];
+  const inWatchlist = Boolean(
+    film && saved["quiero-ver"].some((item) => keyOf(item) === keyOf(film)),
+  );
   const move = (delta) =>
     setSelected((n) => (n + delta + items.length) % items.length);
   return (
     <>
       <div
         className="ambient home-ambient"
-        style={{ backgroundImage: film ? `url(${backdrop(film)})` : undefined }}
+        style={{
+          backgroundImage: film
+            ? `url(${backdrop(film, "w780")})`
+            : undefined,
+        }}
       />
       <Status resource={resource}>
         {film && (
@@ -88,6 +95,7 @@ export default function HomeScreen({ resource, saved, toggle }) {
                         <img
                           src={imageUrl(item.poster_path, "w500")}
                           alt={item.title}
+                          decoding="async"
                         />
                       </button>
                     );
@@ -119,13 +127,13 @@ export default function HomeScreen({ resource, saved, toggle }) {
                     Ver detalles
                   </a>
                   <Button
-                    icon="plus"
+                    type="button"
+                    icon={inWatchlist ? "check" : "plus"}
+                    className="watchlist-button"
                     onClick={() => toggle("quiero-ver", film)}
-                    aria-pressed={saved["quiero-ver"].some(
-                      (m) => keyOf(m) === keyOf(film),
-                    )}
+                    aria-pressed={inWatchlist}
                   >
-                    Quiero ver
+                    {inWatchlist ? "En mi lista" : "Quiero ver"}
                   </Button>
                 </div>
               </div>

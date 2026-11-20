@@ -6,12 +6,14 @@ export const imageUrl = (path, size = "w780") =>
   path
     ? `https://image.tmdb.org/t/p/${size}${path}`
     : "/images/placeholder.svg";
+
 export const normalize = (item, type = item.media_type || "movie") => ({
   ...item,
   media_type: type,
   title: item.title || item.name || "Sin título",
   release_date: item.release_date || item.first_air_date || "",
 });
+
 export async function request(path, params = {}, signal) {
   if (!hasCredentials) throw new Error("Falta configurar el acceso a TMDb.");
   const query = new URLSearchParams({ language: "es-MX", ...params });
@@ -28,14 +30,17 @@ export async function request(path, params = {}, signal) {
     );
   return response.json();
 }
+
 export async function fetchPopularMovies(page = 1, signal) {
   const data = await request("/movie/popular", { page }, signal);
   return data.results.map((item) => normalize(item, "movie"));
 }
+
 export async function fetchPopularSeries(page = 1, signal) {
   const data = await request("/tv/popular", { page }, signal);
   return data.results.map((item) => normalize(item, "tv"));
 }
+
 export async function fetchMixedCatalog(page = 1, signal) {
   const [movies, series] = await Promise.all([
     fetchPopularMovies(page, signal),
@@ -45,12 +50,14 @@ export async function fetchMixedCatalog(page = 1, signal) {
     series[i] ? [movie, series[i]] : [movie],
   );
 }
+
 export const fetchCatalogMovies = fetchMixedCatalog;
-export async function searchMovies(query, page = 1, signal) {
+
+export async function searchMovies(query, page = 1, signal, type) {
   if (!query.trim()) return [];
   // Search the two title endpoints: people are intentionally excluded.
   const groups = await Promise.all(
-    ["movie", "tv"].map(async (type) => {
+    (type ? [type] : ["movie", "tv"]).map(async (type) => {
       const data = await request(
         `/search/${type}`,
         { query, page, include_adult: "false" },
