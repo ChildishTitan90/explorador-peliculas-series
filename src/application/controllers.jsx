@@ -7,6 +7,7 @@ import {
   searchMovies,
   fetchDetails,
   fetchSeason,
+  chooseTrailer,
 } from "../services/interfaceApi";
 import { fetchRandomHomeCatalog } from "../services/movieService";
 import { genres, href } from "../presentation/moviePresentation";
@@ -129,13 +130,7 @@ export function Detail({ type, id, ...props }) {
 export function Modal({ modal, close }) {
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState(false);
-  const video = modal.item.videos?.results
-    ?.filter((v) => v.site === "YouTube" && /^[\w-]{11}$/.test(v.key))
-    .sort(
-      (a, b) =>
-        Number(b.type === "Trailer") - Number(a.type === "Trailer") ||
-        Number(b.iso_639_1 === "es") - Number(a.iso_639_1 === "es"),
-    )[0];
+  const video = chooseTrailer(modal.item.videos?.results);
   const url = `${location.origin}${location.pathname}${href(modal.item)}`;
   async function onCopy() {
     try {

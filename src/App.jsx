@@ -1,11 +1,17 @@
+import { useState } from "react";
+import SocialViews from "./social/SocialViews";
 import Icon from "./components/Icon";
 import { Brand } from "./components/ui";
 import { NAV } from "./presentation/moviePresentation";
 import { Home, Catalog, Detail, Modal } from "./application/controllers";
+import { useSharedPlans, needsPlanResponse } from "./application/useSharedPlans";
 import { useAppController } from "./application/useAppController";
 import CollectionScreen from "./screens/CollectionScreen";
 import "./App.css";
 export default function App() {
+  const [following, setFollowing] = useState(["ana"]);
+  const planStore = useSharedPlans();
+  const pendingPlans = planStore.plans.some((p) => needsPlanResponse(p, "pablo"));
   const {
     route,
     saved,
@@ -17,9 +23,11 @@ export default function App() {
     query,
     detail,
     active,
-  } = useAppController();
+  } = useAppController(planStore.plans);
   return (
-    <div className={`app ${detail ? "detail-page" : ""}`}>
+    <div
+      className={`app ${detail ? "detail-page" : ""} ${["perfil", "actividad"].includes(page) ? "community-page" : ""}`}
+    >
       <a
         className="skip-link"
         href="#contenido"
@@ -44,16 +52,38 @@ export default function App() {
             </a>
           ))}
         </nav>
-        <a
-          href="#/explorar"
-          className="icon-button glass"
-          aria-label="Buscar por título"
-        >
-          <Icon name="search" />
-        </a>
+        <div className="social-nav-links">
+          <a
+            href="#/explorar"
+            className="icon-button glass"
+            aria-label="Buscar por título"
+          >
+            <Icon name="search" />
+          </a>
+          <a href="#/acceso">Entrar</a>
+          <a
+            className="profile-entry"
+            href="#/perfil/pablo"
+            aria-label={pendingPlans ? "Ver mi perfil, planes pendientes" : "Ver perfil de demostración"}
+          >
+            P{pendingPlans && <span className="plan-notification-dot" aria-hidden="true" />}
+          </a>
+        </div>
       </header>
       <main id="contenido" tabIndex="-1">
-        {!page ? (
+        {["actividad", "perfil", "acceso", "personas"].includes(page) ? (
+          <SocialViews
+            key={`${page}:${route.id}`}
+            planStore={planStore}
+            page={page}
+            following={following}
+            setFollowing={setFollowing}
+            saved={saved}
+            toggle={toggle}
+            username={route.id}
+            scope={page === "personas" ? route.section : route.id}
+          />
+        ) : !page ? (
           <Home {...{ saved, toggle }} />
         ) : ["explorar", "peliculas", "series"].includes(page) ? (
           <Catalog
@@ -66,6 +96,7 @@ export default function App() {
           <Detail
             key={`${page}:${route.id}`}
             type={page === "serie" ? "tv" : "movie"}
+            reviewId={route.reviewId}
             id={route.id}
             {...{ saved, toggle }}
             openModal={(kind, item) => setModal({ kind, item })}
