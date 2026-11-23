@@ -1,4 +1,5 @@
 const paths = {
+  activity: <path d="M2 12h5l3-8 4 16 3-8h5" />,
   search: (
     <>
       <circle cx="10.5" cy="10.5" r="6.5" />
@@ -8,6 +9,7 @@ const paths = {
   heart: (
     <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" />
   ),
+  pause: <path d="M9 5v14M15 5v14" />,
   play: <path d="m8 4 12 8-12 8Z" />,
   plus: <path d="M12 5v14M5 12h14" />,
   check: <path d="m5 12 4 4L20 5" />,

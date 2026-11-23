@@ -1,3 +1,12 @@
+const dune = { id: 438631, media_type: "movie", title: "Duna" };
+const dark = { id: 70523, media_type: "tv", title: "Dark" };
+const arrival = { id: 329865, media_type: "movie", title: "La llegada" };
+
+export const friendWatchlists = {
+  ana: [dune, dark, arrival],
+  leo: [arrival, { id: 157336, media_type: "movie", title: "Interestelar" }],
+};
+
 export const people = [
   {
     id: "pablo",

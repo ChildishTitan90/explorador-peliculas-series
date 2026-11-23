@@ -1,4 +1,5 @@
 import Icon from "./Icon";
+import TitleMedia from "./TitleMedia";
 import {
   imageUrl,
   keyOf,
@@ -48,16 +49,32 @@ export function Button({ icon, children, light, className = "", ...props }) {
     </button>
   );
 }
-export function Card({ item, saved, toggle }) {
+export function FavoriteButton({ liked, item, toggle, className = "" }) {
+  return (
+    <button type="button" className={["icon-button glass", className, liked && "liked"].filter(Boolean).join(" ")}
+      aria-label={`${liked ? "Quitar de" : "Agregar a"} favoritos: ${item.title}`}
+      aria-pressed={liked}
+      onClick={(event) => {
+        if (!liked && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          event.currentTarget.querySelector("svg").animate?.([
+            { transform: "scale(1)" }, { transform: "scale(1.2)", offset: 0.4 },
+            { transform: "scale(.96)", offset: 0.75 }, { transform: "scale(1)" },
+          ], { duration: 320, easing: "ease-in-out" });
+        }
+        toggle("favoritos", item);
+      }}>
+      <Icon name="heart" filled={liked} />
+    </button>
+  );
+}
+export function Card({ item, saved, toggle, watchlistAction }) {
+  const pending = watchlistAction && saved["quiero-ver"].some((m) => keyOf(m) === keyOf(item));
   const liked = saved.favoritos.some((m) => keyOf(m) === keyOf(item));
   return (
-    <article className="card">
+    <article className="card" style={{ "--card-still": `url(${imageUrl(item.backdrop_path || item.poster_path)})` }}>
       <a href={href(item)}>
-        <img
-          src={imageUrl(item.backdrop_path || item.poster_path)}
-          alt=""
-          loading="lazy"
-        />
+        <TitleMedia type={item.media_type} id={item.id} title={item.title}
+          image={imageUrl(item.backdrop_path || item.poster_path)}>
         <div className="card-band">
           <h3>{item.title}</h3>
           <p>
@@ -68,23 +85,18 @@ export function Card({ item, saved, toggle }) {
             </span>
           </p>
         </div>
+        </TitleMedia>
       </a>
-      <button
-        className={`icon-button glass card-heart ${liked ? "liked" : ""}`}
-        aria-label={`${liked ? "Quitar de" : "Agregar a"} favoritos: ${item.title}`}
-        aria-pressed={liked}
-        onClick={() => toggle("favoritos", item)}
-      >
-        <Icon name="heart" filled={liked} />
-      </button>
+      {watchlistAction && !saved["ya-vi"].some((entry) => entry.sharedWatched && keyOf(entry) === keyOf(item)) && <button type="button" className="friend-add" aria-pressed={pending} aria-label={(pending ? "Quitar de mi lista: " : "Agregar a mi Quiero ver: ") + item.title} onClick={() => toggle("quiero-ver", item)}>{pending ? "✓ En mi lista" : "+ Quiero ver"}</button>}
+      <FavoriteButton liked={liked} item={item} toggle={toggle} className="card-heart" />
     </article>
   );
 }
-export function Grid({ items, saved, toggle }) {
+export function Grid({ items, saved, toggle, watchlistAction }) {
   return (
     <div className="movie-grid">
       {items.map((item) => (
-        <Card key={keyOf(item)} {...{ item, saved, toggle }} />
+        <Card key={keyOf(item)} {...{ item, saved, toggle, watchlistAction }} />
       ))}
     </div>
   );

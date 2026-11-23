@@ -21,7 +21,7 @@ export async function fetchRandomHomeCatalog(signal) {
     }
 
     return {
-        featured: catalog.slice(0, 5),
+        featured: catalog,
         catalog: catalog.slice(5),
     };
 }

@@ -4,7 +4,7 @@ export const imageUrl = (path, size = "w780") =>
     : "/images/placeholder.svg";
 export const NAV = [
   ["Inicio", "", "home"],
-  ["Explorar", "explorar", "explore"],
+  ["Actividad", "actividad", "activity"],
   ["Películas", "peliculas", "film"],
   ["Series", "series", "tv"],
   ["Favoritos", "favoritos", "heart"],

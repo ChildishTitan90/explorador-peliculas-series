@@ -8,13 +8,10 @@ export default function RatingEditor({ mine, onSave, onDelete }) {
   const [hover, setHover] = useState(null);
   const id = useId();
   const trigger = useRef(null);
-  const backup = useRef(null);
   const shown = hover ?? (score === "" ? 0 : score);
-  function close(cancel = false) {
-    if (cancel && backup.current) {
-      setReview(backup.current.review);
-      setSpoiler(backup.current.spoiler);
-    }
+  const changed = score !== (mine?.score ?? "") || review.trim() !== (mine?.review || "") ||
+    Boolean(review.trim() && spoiler) !== Boolean(mine?.spoiler);
+  function close() {
     setOpen(false);
     trigger.current?.focus();
   }
@@ -23,8 +20,13 @@ export default function RatingEditor({ mine, onSave, onDelete }) {
       className="rating-editor glass"
       onSubmit={(e) => {
         e.preventDefault();
-        if (score === "") return;
-        onSave({ score: Number(score), review: review.trim(), spoiler });
+        if (!changed || score === "") return;
+        onSave({
+          score: Number(score),
+          review: review.trim(),
+          spoiler: Boolean(review.trim() && spoiler),
+        });
+        if (open) close();
       }}
     >
       <h3>{mine ? "Tu calificación" : "¿Qué te pareció esta historia?"}</h3>
@@ -119,8 +121,7 @@ export default function RatingEditor({ mine, onSave, onDelete }) {
           aria-expanded={open}
           aria-controls={id}
           onClick={() => {
-            backup.current = { review, spoiler };
-            setOpen(true);
+            setOpen(!open);
           }}
         >
           {review ? "Editar crítica" : "Escribir crítica"}
@@ -135,13 +136,12 @@ export default function RatingEditor({ mine, onSave, onDelete }) {
         <section
           id={id}
           className="critique-composer"
-          role="dialog"
           aria-labelledby={`${id}-title`}
           onKeyDown={(e) => {
             if (e.key === "Escape") {
               e.preventDefault();
               e.stopPropagation();
-              close(true);
+              close();
             }
           }}
         >
@@ -151,7 +151,7 @@ export default function RatingEditor({ mine, onSave, onDelete }) {
               type="button"
               className="critique-close"
               aria-label="Cerrar recuadro de crítica"
-              onClick={() => close(true)}
+              onClick={() => close()}
             >
               ×
             </button>
@@ -177,28 +177,12 @@ export default function RatingEditor({ mine, onSave, onDelete }) {
             </label>
             <small>{review.length}/4000</small>
           </div>
-          <div className="actions">
-            <button
-              type="button"
-              className="button light"
-              onClick={() => close()}
-            >
-              Añadir a mi nota
-            </button>
-            <button
-              type="button"
-              className="button glass"
-              onClick={() => close(true)}
-            >
-              Cancelar
-            </button>
-          </div>
         </section>
       )}
-      <div className="actions">
-        <button className="button light" disabled={score === ""}>
-          {mine ? "Actualizar" : "Guardar"} nota · Demo
-        </button>
+      {(changed || mine) && <div className="actions">
+        {changed && <button className="button light" disabled={score === ""}>
+          {mine ? "Actualizar" : "Guardar"} nota
+        </button>}
         {mine && (
           <button
             type="button"
@@ -214,7 +198,7 @@ export default function RatingEditor({ mine, onSave, onDelete }) {
             Eliminar nota
           </button>
         )}
-      </div>
+      </div>}
     </form>
   );
 }

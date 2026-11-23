@@ -1,16 +1,22 @@
 import { useEffect, useState } from "react";
 import { keyOf } from "../presentation/moviePresentation";
 function parseRoute() {
-  const [page = "", id = "", section = ""] = location.hash
-    .replace(/^#\/?/, "")
-    .split("/");
-  return { page, id, section };
+  const [path, search] = location.hash.replace(/^#\/?/, "").split("?");
+  const [page = "", id = "", section = ""] = path.split("/");
+  const params = new URLSearchParams(search);
+  return {
+    page,
+    id,
+    section,
+    query: params.get("q") || "",
+    reviewId: params.get("critica"),
+  };
 }
 const lists = ["favoritos", "quiero-ver", "ya-vi"];
 function readCollection() {
   try {
     const data = JSON.parse(localStorage.getItem("cinepollis.collection"));
-    return Object.fromEntries(
+    const saved = Object.fromEntries(
       lists.map((list) => [
         list,
         Array.isArray(data?.[list])
@@ -23,13 +29,18 @@ function readCollection() {
           : [],
       ]),
     );
+    const watched = new Set(saved["ya-vi"].map(keyOf));
+    saved["quiero-ver"] = saved["quiero-ver"].filter(
+      (item) => !watched.has(keyOf(item)),
+    );
+    return saved;
   } catch {
     return Object.fromEntries(lists.map((list) => [list, []]));
   }
 }
-export function useAppController() {
+export function useAppController(plans) {
   const [route, setRoute] = useState(parseRoute);
-  const [saved, setSaved] = useState(readCollection);
+  const [collection, setSaved] = useState(readCollection);
   const [modal, setModal] = useState(null);
   const [storageError, setStorageError] = useState(false);
   useEffect(() => {
@@ -43,32 +54,46 @@ export function useAppController() {
   }, []);
   useEffect(() => {
     try {
-      localStorage.setItem("cinepollis.collection", JSON.stringify(saved));
+      localStorage.setItem("cinepollis.collection", JSON.stringify(collection));
     } catch {
       queueMicrotask(() => setStorageError(true));
     }
-  }, [saved]);
-  const toggle = (list, item) =>
-    setSaved((previous) => ({
-      ...previous,
-      [list]: previous[list].some((m) => keyOf(m) === keyOf(item))
-        ? previous[list].filter((m) => keyOf(m) !== keyOf(item))
-        : [
-            ...previous[list],
-            {
-              id: item.id,
-              media_type: item.media_type,
-              title: item.title,
-              release_date: item.release_date,
-              vote_average: item.vote_average,
-              poster_path: item.poster_path,
-              backdrop_path: item.backdrop_path,
-              genre_ids: item.genre_ids || item.genres?.map((g) => g.id),
-            },
-          ],
-    }));
-  const [page, queryString = ""] = route.page.split("?");
-  const query = new URLSearchParams(queryString).get("q") || "";
+  }, [collection]);
+  const shared = new Map(plans.filter((p) => p.state === "complete" && p.type === "movie").map((p) => [keyOf(p.item), { ...p.item, sharedWatched: true }]));
+  const saved = { ...collection, "ya-vi": [...shared.values(), ...collection["ya-vi"].filter((item) => !shared.has(keyOf(item)))], "quiero-ver": collection["quiero-ver"].filter((item) => !shared.has(keyOf(item))) };
+  const toggle = (list, item) => {
+    if (list !== "favoritos" && shared.has(keyOf(item))) return;
+    setSaved((previous) => {
+      const matches = (entry) => keyOf(entry) === keyOf(item);
+      if (previous[list].some(matches)) {
+        return {
+          ...previous,
+          [list]: previous[list].filter((entry) => !matches(entry)),
+        };
+      }
+      const next = {
+        ...previous,
+        [list]: [
+          ...previous[list],
+          {
+            id: item.id,
+            media_type: item.media_type,
+            title: item.title,
+            release_date: item.release_date,
+            vote_average: item.vote_average,
+            poster_path: item.poster_path,
+            backdrop_path: item.backdrop_path,
+            genre_ids: item.genre_ids || item.genres?.map((g) => g.id),
+          },
+        ],
+      };
+      const opposite = { "ya-vi": "quiero-ver", "quiero-ver": "ya-vi" }[list];
+      if (opposite)
+        next[opposite] = previous[opposite].filter((entry) => !matches(entry));
+      return next;
+    });
+  };
+  const { page, query } = route;
   const detail = ["pelicula", "serie"].includes(page);
   const active = detail
     ? page === "serie"
@@ -76,7 +101,9 @@ export function useAppController() {
       : "peliculas"
     : ["quiero-ver", "ya-vi"].includes(page)
       ? "favoritos"
-      : page;
+      : page === "explorar"
+        ? ""
+        : page;
   return {
     route,
     saved,

@@ -92,3 +92,51 @@ export async function fetchDetails(type, id, signal) {
 }
 export const fetchSeason = (id, season, signal) =>
   request(`/tv/${id}/season/${season}`, {}, signal);
+
+export function chooseTrailer(videos = []) {
+  return videos
+    .filter(
+      (video) => ["Trailer", "Teaser"].includes(video.type) && video.site === "YouTube" && /^[\w-]{11}$/.test(video.key),
+    )
+    .sort(
+      (a, b) =>
+        Number(b.type === "Trailer") - Number(a.type === "Trailer") ||
+        Number(b.iso_639_1 === "es") - Number(a.iso_639_1 === "es"),
+    )[0];
+}
+
+const trailers = new Map();
+export async function fetchPreview(type, id, signal) {
+  const key = type + ":" + id;
+  if (trailers.has(key)) return trailers.get(key);
+  const path = "/" + type + "/" + id + "/videos";
+  const localized = await request(path, {}, signal);
+  let video = chooseTrailer(localized.results);
+  if (!video)
+    video = chooseTrailer(
+      (await request(path, { language: "en-US" }, signal)).results,
+    );
+  const videoKey = video?.key || null;
+  trailers.set(key, videoKey);
+  return videoKey;
+}
+
+const scenePaths = new Map();
+export async function fetchScene(type, id, signal) {
+  const key = type + ":" + id;
+  let images = scenePaths.get(key);
+  if (!images) {
+    const data = await request(
+      "/" + type + "/" + id + "/images",
+      { include_image_language: "null" },
+      signal,
+    );
+    images = (data.backdrops || [])
+      .map((image) => image.file_path)
+      .filter(Boolean);
+    scenePaths.set(key, images);
+  }
+  return images.length
+    ? imageUrl(images[Math.floor(Math.random() * images.length)])
+    : null;
+}
