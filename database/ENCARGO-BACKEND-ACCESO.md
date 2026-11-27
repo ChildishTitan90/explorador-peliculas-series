@@ -4,7 +4,7 @@ Implementa el registro, inicio de sesión, consulta de sesión y cierre de sesi�
 
 ## Punto de partida
 
-- Crea tu rama de desarrollo desde el develop actualizado. Revisa primero si el equipo ya eligió un servidor o framework y reutilízalo.
+- Crea tu rama de backend desde origin/feature/base-datos-v3 para disponer de las pantallas, las migraciones y AGENTS.md. Si ya tienes una rama, integra esos cambios antes de probar el acceso. Revisa primero si el equipo ya eligió un servidor o framework y reutilízalo.
 - Las migraciones y la guía están en la rama feature/base-datos-v3, carpeta database/. Consulta LEEME-PRIMERO.md. Para una base local vacía, ejecuta 001_schema.sql, 004_estadisticas_planes.sql y 005_acceso_correo.sql en ese orden. Si ya están instaladas, usa el esquema existente.
 - La autenticación usa PostgreSQL. Puedes trabajar en local aunque el servidor compartido esté pendiente. MongoDB se utiliza para el feed de actividad.
 - Las pantallas preparadas por Pablo usan las rutas relativas /api/auth/login y /api/auth/register, JSON y cookies del mismo origen. Acuerda un proxy local de /api hacia tu servidor si React y el backend corren en puertos distintos.
