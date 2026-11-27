@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import Icon from "../components/Icon";
 import { Status, Heading, Grid, Button } from "../components/ui";
 import {
@@ -13,13 +13,36 @@ import {
 export default function HomeScreen({ resource, saved, toggle }) {
   const [selected, setSelected] = useState(0);
   const start = useRef(null);
+  const opening = useRef(null);
+  useEffect(() => () => opening.current?.cancel(), []);
+
+  function openPoster(button, item) {
+    if (opening.current) return;
+    const destination = href(item);
+    if (!button.animate || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      window.location.assign(destination);
+      return;
+    }
+
+    const originalRoute = location.hash;
+    const transform = getComputedStyle(button).transform;
+    const animation = button.animate([
+      { transform },
+      { transform: transform + " scale(1.10)" },
+    ], { duration: 330, easing: "ease-in-out", fill: "forwards" });
+    opening.current = animation;
+    animation.onfinish = () => {
+      if (location.hash === originalRoute) window.location.assign(destination);
+    };
+  }
   const items = resource.data?.featured || [];
   const film = items[selected];
   const inWatchlist = Boolean(
     film && saved["quiero-ver"].some((item) => keyOf(item) === keyOf(film)),
   );
-  const move = (delta) =>
-    setSelected((n) => (n + delta + items.length) % items.length);
+  const move = (delta) => {
+    if (!opening.current) setSelected((n) => (n + delta + items.length) % items.length);
+  };
   return (
     <>
       <div
@@ -74,6 +97,7 @@ export default function HomeScreen({ resource, saved, toggle }) {
                   {items.map((item, i) => {
                     let offset = (i - selected + items.length) % items.length;
                     if (offset > items.length / 2) offset -= items.length;
+                    if (Math.abs(offset) > 3) return null;
                     return (
                       <button
                         key={keyOf(item)}
@@ -86,11 +110,10 @@ export default function HomeScreen({ resource, saved, toggle }) {
                             ? `Ver detalles de ${item.title}`
                             : `Seleccionar ${item.title}`
                         }
-                        onClick={() =>
-                          offset === 0
-                            ? (location.hash = href(item).slice(1))
-                            : setSelected(i)
-                        }
+                        onClick={(event) => {
+                          if (offset === 0) openPoster(event.currentTarget, item);
+                          else if (!opening.current) setSelected(i);
+                        }}
                       >
                         <img
                           src={imageUrl(item.poster_path, "w500")}
@@ -147,6 +170,7 @@ export default function HomeScreen({ resource, saved, toggle }) {
                 items={resource.data.catalog}
                 {...{ saved, toggle }}
               />
+              <div className="catalog-end"><a className="button glass" href="#/explorar">Ver todo el catálogo →</a></div>
             </section>
           </>
         )}

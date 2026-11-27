@@ -1,6 +1,9 @@
-import { useState } from "react";
+import { SocialRatingPanel } from "../social/SocialViews";
+import TrailerPreview from "../components/TrailerPreview";
+import { chooseTrailer } from "../services/interfaceApi";
+import { useRef, useState } from "react";
 import Icon from "../components/Icon";
-import { Status, Button, Grid } from "../components/ui";
+import { Status, Button, Grid, FavoriteButton } from "../components/ui";
 import {
   backdrop,
   genres,
@@ -16,8 +19,14 @@ export default function DetailScreen({
   toggle,
   openModal,
   renderSeasons,
+  reviewId,
 }) {
   const [section, setSection] = useState("info");
+  const [preview, setPreview] = useState(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "paused" : "active");
+  const position = useRef(0);
+  const video = chooseTrailer(item?.videos?.results);
+  const available = video && preview !== "unavailable";
+  const sharedWatched = Boolean(item) && saved["ya-vi"].some((entry) => entry.sharedWatched && keyOf(entry) === keyOf(item));
   const inList = (list) => saved[list].some((m) => keyOf(m) === keyOf(item));
   return (
     <Status resource={resource}>
@@ -26,7 +35,17 @@ export default function DetailScreen({
           <div
             className="detail-backdrop"
             style={{ backgroundImage: `url(${backdrop(item)})` }}
-          />
+          >
+            {available && preview === "active" && <TrailerPreview video={video.key} title={item.title} start={0} position={position} onStop={setPreview} />}
+          </div>
+          {available && <button
+            className="backdrop-toggle"
+            aria-label={preview === "active" ? "Pausar avance de fondo" : "Reproducir avance de fondo"}
+            onClick={() => {
+              if (preview === "ended") position.current = 0;
+              setPreview(preview === "active" ? "paused" : "active");
+            }}
+          />}
           <a
             className="back-link"
             href={type === "tv" ? "#/series" : "#/peliculas"}
@@ -52,28 +71,22 @@ export default function DetailScreen({
                 "La sinopsis todavía no está disponible en español."}
             </p>
             <div className="actions">
-              <Button
+              {available && <Button
                 light
                 icon="play"
-                onClick={() => openModal("trailer", item)}
+                onClick={() => { setPreview("paused"); openModal("trailer", item); }}
               >
                 Ver tráiler
-              </Button>
+              </Button>}
               <Button
                 icon={inList("quiero-ver") ? "check" : "plus"}
+                disabled={sharedWatched}
                 onClick={() => toggle("quiero-ver", item)}
                 aria-pressed={inList("quiero-ver")}
               >
                 Quiero ver
               </Button>
-              <button
-                className={`icon-button glass ${inList("favoritos") ? "liked" : ""}`}
-                aria-label="Dar corazón"
-                aria-pressed={inList("favoritos")}
-                onClick={() => toggle("favoritos", item)}
-              >
-                <Icon name="heart" filled={inList("favoritos")} />
-              </button>
+              <FavoriteButton liked={inList("favoritos")} item={item} toggle={toggle} />
               <button
                 className="icon-button glass"
                 aria-label="Compartir enlace"
@@ -84,6 +97,7 @@ export default function DetailScreen({
             </div>
             <button
               className="watched"
+              disabled={sharedWatched}
               aria-pressed={inList("ya-vi")}
               onClick={() => toggle("ya-vi", item)}
             >
@@ -91,13 +105,12 @@ export default function DetailScreen({
               {inList("ya-vi") ? "Ya la vi" : "Marcar como vista"}
             </button>
           </section>
-          <button
-            className="icon-button glass backdrop-play"
-            aria-label="Abrir tráiler"
-            onClick={() => openModal("trailer", item)}
-          >
-            <Icon name="play" />
-          </button>
+          <SocialRatingPanel
+            key={`${type}:${item.id}:${reviewId || ""}`}
+            reviewId={reviewId}
+            item={item}
+            type={type}
+          />
           <section className="detail-info">
             {type === "tv" && (
               <div className="chips">
