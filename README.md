@@ -380,7 +380,104 @@ La búsqueda escrita se conserva en el estado de la pantalla y no modifica autom
 
 La aplicación es un explorador de información: no reproduce las películas o series completas.
 
-## 16. Créditos
+## 16. Servidor y conexiones privadas
+
+El servidor usa Node.js, PostgreSQL en Supabase y MongoDB Atlas. Su configuración
+local está en `.env.server.local`, excluido de Git. Consultar los formatos en
+`.env.server.example` y completar `DATABASE_URL` y `MONGODB_URI`.
+Las contraseñas con caracteres especiales deben codificarse para una URL.
+El usuario de MongoDB debe tener acceso a `cinepollis_social`. Para Atlas,
+la conexión utiliza `authSource=admin`.
+
+Ejecutar `npm run dev:server` en una terminal y `npm run dev` en otra.
+Vite dirige las solicitudes `/api` al servidor local del puerto 3001.
+`GET /api/health` comprueba que el servidor responde.
+`npm run check:db` comprueba las conexiones y la lectura de ambas bases sin
+mostrar datos personales ni credenciales. La configuración de red de Atlas debe
+permitir conectarse desde el equipo o servidor.
+
+Las conexiones se reutilizan y PostgreSQL verifica el certificado TLS.
+Si requiere una CA específica, configurar `DATABASE_SSL_CA` con su certificado
+PEM obtenido de Supabase.
+
+En Vercel, configurar las variables privadas en el proyecto y desplegar los
+cambios. La función `api/health.js` ofrece la misma ruta. El archivo local
+de variables permanece en el equipo. Usar nombres sin prefijo `VITE_`
+para las credenciales de bases de datos.
+
+El registro y login están en `/api/auth/register` y `/api/auth/login`.
+Las contraseñas se guardan con Argon2id y las sesiones con un digest SHA-256
+del token de su cookie HttpOnly, SameSite=Strict y Secure en producción.
+La sesión dura como máximo siete días. Las rutas `me`, `heartbeat` y `logout`
+consultan, actualizan actividad y cierran la sesión.
+
+Configurar `APP_ORIGIN` con el origen exacto de la página, por ejemplo
+`https://explorador-peliculas-series.vercel.app`, sin barra final.
+Para usar Turnstile registrar ese dominio con Cloudflare y configurar
+`TURNSTILE_SITE_KEY` y `TURNSTILE_SECRET_KEY` en el servidor.
+La clave secreta se usa solo para validar los tokens con Cloudflare.
+El formulario solicita un CAPTCHA en cada registro o intento de acceso.
+
+Para pruebas locales se puede establecer `AUTH_TEST_CAPTCHA=true` en
+`.env.server.local` y reiniciar el servidor. Este modo utiliza las claves
+oficiales de prueba de Cloudflare y solo funciona fuera de Vercel y producción.
+Sin claves reales configuradas, el servidor publicado rechaza registro y login.
+
+Cinco contraseñas incorrectas bloquean la cuenta durante 15 minutos.
+Si existe una sesión vigente con actividad en los últimos cinco minutos,
+se rechaza el nuevo login. Una sesión inactiva se reemplaza, invalidando
+su token anterior. La página confirma actividad una vez por minuto cuando
+está visible y se usó recientemente. Consultar la sesión no renueva actividad.
+
+Los correos aún no se verifican y la recuperación de contraseña está pendiente.
+Los perfiles de ejemplo, seguidores y planes compartidos conservan sus datos de
+demostración. La página Actividad utiliza las calificaciones públicas reales.
+
+### Listas y calificaciones personales
+
+Aplicar las migraciones de `database/postgresql` en orden, incluida
+`009_presentacion_titulos.sql`. Configurar `TMDB_API_KEY` (o `TMDB_READ_TOKEN`)
+en el servidor para verificar los títulos contra TMDb.
+
+Con sesión iniciada, Favoritos, Quiero ver, Ya vi y las calificaciones se
+guardan en Supabase y se recuperan al volver a entrar. Mi cuenta muestra las
+calificaciones de películas y episodios; el promedio de una serie se calcula
+con sus episodios calificados. Una nota implica que el título ya fue visto.
+Eliminar una nota conserva el estado de visto y las demás listas.
+
+`GET /api/account/entries` consulta los registros de la sesión.
+`POST /api/account/list` asigna un estado a una lista y
+`POST /api/account/rating` crea, actualiza o elimina una calificación.
+El servidor verifica la sesión y obtiene la identidad del usuario de su cookie;
+el identificador del cuerpo solo sirve para detectar cambios de cuenta.
+Las escrituras son transaccionales y usan títulos verificados con TMDb.
+
+Sin sesión, las listas siguen guardándose en el navegador. Estos datos previos
+no se importan automáticamente a una cuenta. Las calificaciones requieren
+iniciar sesión.
+
+### Actividad pública en MongoDB
+
+`GET /api/activity` devuelve hasta 20 calificaciones públicas con paginación
+por cursor. Incluye películas y episodios; las críticas con spoilers requieren
+pulsar Mostrar crítica. Nunca devuelve correos, contraseñas o tokens.
+
+El servidor transfiere `activity_outbox` de Supabase a la colección `activity`
+de MongoDB después de guardar y antes de consultar la comunidad. Procesa hasta
+50 eventos por solicitud, con bloqueo entre procesos, versiones bigint y
+actualizaciones idempotentes. Solo marca el evento como procesado después de
+confirmar MongoDB. Si falla, conserva el evento y reintenta en la siguiente
+consulta o escritura; el guardado personal sigue siendo válido.
+
+Se utiliza la validación e índices de `database/mongodb/001_atlas.js`.
+Las notas eliminadas se ocultan mediante documentos sin crítica ni actor.
+Cada lectura verifica además en Supabase que la nota y el historial sigan
+siendo públicos y actuales. Favoritos y Quiero ver no generan publicaciones.
+Editar una nota conserva su fecha original y no crea publicaciones duplicadas.
+El botón Actualizar vuelve a consultar la comunidad; no hay proceso programado
+independiente ni actualización automática en tiempo real.
+
+## 17. Créditos
 
 Los datos e imágenes del catálogo proceden de The Movie Database.
 

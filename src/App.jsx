@@ -1,4 +1,10 @@
 import { useState } from "react";
+import { useAuth } from "./application/useAuth";
+import AccessScreen from "./screens/AccessScreen";
+import { AccountContext } from "./application/AccountContext";
+import { useAccountData } from "./application/useAccountData";
+import AccountScreen from "./screens/AccountScreen";
+import CommunityScreen from "./screens/CommunityScreen";
 import SocialViews from "./social/SocialViews";
 import Icon from "./components/Icon";
 import { Brand } from "./components/ui";
@@ -9,6 +15,8 @@ import { useAppController } from "./application/useAppController";
 import CollectionScreen from "./screens/CollectionScreen";
 import "./App.css";
 export default function App() {
+  const auth = useAuth();
+  const account = useAccountData(auth.user);
   const [following, setFollowing] = useState(["ana"]);
   const planStore = useSharedPlans();
   const pendingPlans = planStore.plans.some((p) => needsPlanResponse(p, "pablo"));
@@ -23,8 +31,9 @@ export default function App() {
     query,
     detail,
     active,
-  } = useAppController(planStore.plans);
+  } = useAppController(planStore.plans, auth, account);
   return (
+    <AccountContext.Provider value={account}>
     <div
       className={`app ${detail ? "detail-page" : ""} ${["perfil", "actividad"].includes(page) ? "community-page" : ""}`}
     >
@@ -60,18 +69,18 @@ export default function App() {
           >
             <Icon name="search" />
           </a>
-          <a href="#/acceso">Entrar</a>
+          <a href="#/acceso">{auth.user ? auth.user.display_name : "Entrar"}</a>
           <a
             className="profile-entry"
-            href="#/perfil/pablo"
-            aria-label={pendingPlans ? "Ver mi perfil, planes pendientes" : "Ver perfil de demostración"}
+            href={auth.user ? "#/cuenta" : "#/perfil/pablo"}
+            aria-label={auth.user ? "Ver mi cuenta" : pendingPlans ? "Ver perfil de demostración, planes pendientes" : "Ver perfil de demostración"}
           >
-            P{pendingPlans && <span className="plan-notification-dot" aria-hidden="true" />}
+            {auth.user ? auth.user.display_name[0] : "P"}{!auth.user && pendingPlans && <span className="plan-notification-dot" aria-hidden="true" />}
           </a>
         </div>
       </header>
       <main id="contenido" tabIndex="-1">
-        {["actividad", "perfil", "acceso", "personas"].includes(page) ? (
+        {page === "actividad" ? <CommunityScreen /> : page === "cuenta" ? <AccountScreen /> : page === "acceso" ? <AccessScreen auth={auth} /> : ["perfil", "personas"].includes(page) ? (
           <SocialViews
             key={`${page}:${route.id}`}
             planStore={planStore}
@@ -91,7 +100,7 @@ export default function App() {
             {...{ page, query, saved, toggle }}
           />
         ) : ["favoritos", "quiero-ver", "ya-vi"].includes(page) ? (
-          <CollectionScreen {...{ page, saved, toggle }} />
+          <CollectionScreen {...{ page, saved, toggle }} account={account} />
         ) : detail && /^\d+$/.test(route.id) ? (
           <Detail
             key={`${page}:${route.id}`}
@@ -110,6 +119,7 @@ export default function App() {
           </div>
         )}
       </main>
+      {account.error && <p className="storage-warning" role="alert">{account.error} <button onClick={() => location.reload()}>Volver a cargar</button></p>}
       {storageError && (
         <p className="storage-warning" role="status">
           El navegador no pudo guardar tu colección. Los cambios durarán durante
@@ -142,5 +152,6 @@ export default function App() {
       </nav>
       {modal && <Modal modal={modal} close={() => setModal(null)} />}
     </div>
+    </AccountContext.Provider>
   );
 }

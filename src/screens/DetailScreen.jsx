@@ -1,4 +1,4 @@
-import { SocialRatingPanel } from "../social/SocialViews";
+import MyRatingPanel from "./MyRatingPanel";
 import TrailerPreview from "../components/TrailerPreview";
 import { chooseTrailer } from "../services/interfaceApi";
 import { useRef, useState } from "react";
@@ -105,7 +105,7 @@ export default function DetailScreen({
               {inList("ya-vi") ? "Ya la vi" : "Marcar como vista"}
             </button>
           </section>
-          <SocialRatingPanel
+          <MyRatingPanel
             key={`${type}:${item.id}:${reviewId || ""}`}
             reviewId={reviewId}
             item={item}

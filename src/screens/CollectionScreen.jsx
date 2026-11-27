@@ -1,6 +1,6 @@
 import Icon from "../components/Icon";
 import { Heading, Grid } from "../components/ui";
-export default function CollectionScreen({ page, saved, toggle }) {
+export default function CollectionScreen({ page, saved, toggle, account }) {
   const tabs = [
     ["favoritos", "Favoritos"],
     ["quiero-ver", "Quiero ver"],
@@ -29,10 +29,11 @@ export default function CollectionScreen({ page, saved, toggle }) {
           </a>
         ))}
       </div>
+      {account?.loading && <p role="status">Cargando tus listas…</p>}
       <p className="collection-count">
         {items.length} {items.length === 1 ? "título" : "títulos"}
       </p>
-      {items.length ? (
+      {account?.loading || account?.error ? null : items.length ? (
         <Grid {...{ items, saved, toggle }} />
       ) : (
         <div className="empty">
@@ -54,7 +55,7 @@ export default function CollectionScreen({ page, saved, toggle }) {
           </a>
         </div>
       )}
-      <p className="storage-note">Guardado en este navegador</p>
+      <p className="storage-note">{account?.user ? "Guardado en tu cuenta de Cinepollis" : "Guardado en este navegador. Inicia sesión para usar tus listas de cuenta."}</p>
     </>
   );
 }
