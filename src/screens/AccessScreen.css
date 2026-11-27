@@ -1,0 +1,16 @@
+.access-scene { min-height: 76vh; display: grid; align-items: center; justify-items: end; padding: clamp(20px, 6vw, 92px); background: linear-gradient(100deg, #080a1120, #0c0b13d9 80%), url("/images/interstellar-bg.jpg") center/cover; border-radius: 24px; }
+.access-panel { width: min(100%, 420px); padding: clamp(22px, 4vw, 42px); background: #18171eea; backdrop-filter: blur(18px); border-radius: 24px; box-shadow: 0 24px 65px #0005; }
+.access-panel h1 { font-size: clamp(29px, 4vw, 43px); letter-spacing: -.045em; margin-bottom: 24px; }
+.access-panel form, .access-panel label { display: grid; gap: 8px; }
+.access-panel form { gap: 14px; }
+.access-panel label { font-size: 14px; }
+.access-panel small, .access-panel > p, .access-guest { color: var(--muted); }
+.access-panel input { width: 100%; min-width: 0; padding: 13px; border: 0; border-radius: 11px; color: var(--text); background: #ffffff10; }
+.access-password { position: relative; margin-top: -6px; }
+.access-password input { padding-right: 80px; }
+.access-password button { position: absolute; inset: 0 4px 0 auto; background: transparent; padding-inline: 10px; color: var(--warm); }
+.access-panel form > .button { margin-top: 6px; }
+.access-panel > p, .access-guest { display: block; font-size: 14px; text-align: center; margin-top: 19px; }
+.access-panel p a { color: var(--warm); text-decoration: underline; }
+.access-panel [role="alert"] { color: #ffc1c4; font-size: 14px; }
+@media(max-width: 600px) { .access-scene { justify-items: center; padding: 16px; border-radius: 16px; } }

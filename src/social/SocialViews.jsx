@@ -226,23 +226,6 @@ export default function SocialViews({
   const all = [...entries].sort(
     (a, b) => Date.parse(b.date) - Date.parse(a.date),
   );
-  if (page === "acceso")
-    return (
-      <section className="social-access glass">
-        <p className="eyebrow">TU CÍRCULO DE CINE</p>
-        <h1>Las historias se disfrutan más juntos.</h1>
-        <p>Califica, descubre lo que ven los demás y crea tu perfil.</p>
-        <button className="button light" disabled>
-          Continuar con Google · Próximamente
-        </button>
-        <p>
-          El registro estará abierto. Por ahora puedes explorar todas las
-          pantallas sin iniciar sesión.
-        </p>
-        <a href="#/actividad">Ver demostración de la comunidad →</a>
-        <DemoNote />
-      </section>
-    );
   if (page === "perfil") {
     const person = getPerson(username) || people[0];
     const own = person.id === "pablo";
