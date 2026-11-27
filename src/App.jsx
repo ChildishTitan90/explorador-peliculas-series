@@ -1,3 +1,4 @@
+import AccessScreen from "./screens/AccessScreen";
 import { useState } from "react";
 import SocialViews from "./social/SocialViews";
 import Icon from "./components/Icon";
@@ -71,7 +72,9 @@ export default function App() {
         </div>
       </header>
       <main id="contenido" tabIndex="-1">
-        {["actividad", "perfil", "acceso", "personas"].includes(page) ? (
+        {["acceso", "registro"].includes(page) ? (
+          <AccessScreen key={page} register={page === "registro"} />
+        ) : ["actividad", "perfil", "personas"].includes(page) ? (
           <SocialViews
             key={`${page}:${route.id}`}
             planStore={planStore}
