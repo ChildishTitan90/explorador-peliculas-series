@@ -6,6 +6,7 @@ export default function RatingEditor({ mine, onSave, onDelete }) {
   const [spoiler, setSpoiler] = useState(mine?.spoiler || false);
   const [open, setOpen] = useState(false);
   const [hover, setHover] = useState(null);
+  const [busy, setBusy] = useState(false);
   const id = useId();
   const trigger = useRef(null);
   const shown = hover ?? (score === "" ? 0 : score);
@@ -18,17 +19,21 @@ export default function RatingEditor({ mine, onSave, onDelete }) {
   return (
     <form
       className="rating-editor glass"
-      onSubmit={(e) => {
+      onSubmit={async (e) => {
         e.preventDefault();
-        if (!changed || score === "") return;
-        onSave({
-          score: Number(score),
-          review: review.trim(),
-          spoiler: Boolean(review.trim() && spoiler),
-        });
-        if (open) close();
+        if (busy || !changed || score === "") return;
+        setBusy(true);
+        try {
+          const result = await onSave({
+            score: Number(score),
+            review: review.trim(),
+            spoiler: Boolean(review.trim() && spoiler),
+          });
+          if (result !== false && open) close();
+        } finally { setBusy(false); }
       }}
     >
+      <fieldset disabled={busy} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
       <h3>{mine ? "Tu calificación" : "¿Qué te pareció esta historia?"}</h3>
       <div
         className="rating-star-picker"
@@ -187,18 +192,25 @@ export default function RatingEditor({ mine, onSave, onDelete }) {
           <button
             type="button"
             className="button glass"
-            onClick={() => {
-              onDelete();
-              setScore("");
-              setReview("");
-              setSpoiler(false);
-              setOpen(false);
+            onClick={async () => {
+              if (busy) return;
+              setBusy(true);
+              try {
+                const result = await onDelete();
+                if (result === false) return;
+                setScore("");
+                setReview("");
+                setSpoiler(false);
+                setOpen(false);
+              } finally { setBusy(false); }
             }}
           >
             Eliminar nota
           </button>
         )}
       </div>}
+      {busy && <p role="status">Guardando…</p>}
+      </fieldset>
     </form>
   );
 }

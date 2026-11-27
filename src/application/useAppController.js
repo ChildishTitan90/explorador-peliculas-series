@@ -38,7 +38,7 @@ function readCollection() {
     return Object.fromEntries(lists.map((list) => [list, []]));
   }
 }
-export function useAppController(plans) {
+export function useAppController(plans, auth, account) {
   const [route, setRoute] = useState(parseRoute);
   const [collection, setSaved] = useState(readCollection);
   const [modal, setModal] = useState(null);
@@ -59,9 +59,16 @@ export function useAppController(plans) {
       queueMicrotask(() => setStorageError(true));
     }
   }, [collection]);
-  const shared = new Map(plans.filter((p) => p.state === "complete" && p.type === "movie").map((p) => [keyOf(p.item), { ...p.item, sharedWatched: true }]));
-  const saved = { ...collection, "ya-vi": [...shared.values(), ...collection["ya-vi"].filter((item) => !shared.has(keyOf(item)))], "quiero-ver": collection["quiero-ver"].filter((item) => !shared.has(keyOf(item))) };
+  const shared = new Map((auth.user ? [] : plans).filter((p) => p.state === "complete" && p.type === "movie").map((p) => [keyOf(p.item), { ...p.item, sharedWatched: true }]));
+  const saved = auth.user ? account.saved : { ...collection, "ya-vi": [...shared.values(), ...collection["ya-vi"].filter((item) => !shared.has(keyOf(item)))], "quiero-ver": collection["quiero-ver"].filter((item) => !shared.has(keyOf(item))) };
   const toggle = (list, item) => {
+    if (auth.loading) return;
+    if (auth.user) {
+      if (!account.loading && !account.error) {
+        account.setList(list, item, !saved[list].some((entry) => keyOf(entry) === keyOf(item)));
+      }
+      return;
+    }
     if (list !== "favoritos" && shared.has(keyOf(item))) return;
     setSaved((previous) => {
       const matches = (entry) => keyOf(entry) === keyOf(item);
